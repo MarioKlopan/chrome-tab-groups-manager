@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <script src="theme-init.js"></script>
+  <title>Tab Groups Manager</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="topbar-row">
+        <div class="brand">
+          <span class="brand-dot" aria-hidden="true"></span>
+          <h1 class="brand-title">Tab Groups</h1>
+        </div>
+        <div class="topbar-actions">
+          <button type="button" id="btn-new-folder-top" class="icon-btn" title="New folder" aria-label="New folder">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M2 3.5A1.5 1.5 0 0 1 3.5 2h2.8l1.2 1.5h5A1.5 1.5 0 0 1 14 5v7.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 12.5v-9Z" stroke="currentColor" stroke-width="1.4"/>
+              <path d="M8 6.5v4M6 8.5h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <button type="button" id="btn-settings" class="icon-btn" title="Settings &amp; Backup" aria-label="Settings and Backup">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <circle cx="8" cy="8" r="2.2" stroke="currentColor" stroke-width="1.4"/>
+              <path d="M8 1.8v1.4M8 12.8v1.4M1.8 8h1.4M12.8 8h1.4M3.6 3.6l1 1M11.4 11.4l1 1M12.4 3.6l-1 1M4.6 11.4l-1 1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="search-wrap">
+        <svg class="search-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <circle cx="7" cy="7" r="4.8" stroke="currentColor" stroke-width="1.5"/>
+          <path d="m10.6 10.6 3.2 3.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <input
+          type="search"
+          id="search-input"
+          class="search-input"
+          placeholder="Search groups, folders, or tabs..."
+          aria-label="Search groups, folders, or tabs"
+        >
+        <button type="button" id="btn-clear-search" class="clear-search" hidden aria-label="Clear search">&times;</button>
+      </div>
+
+      <nav class="tablist" role="tablist" aria-label="Views">
+        <button
+          type="button"
+          role="tab"
+          id="tab-active"
+          class="tab-btn"
+          aria-selected="true"
+          aria-controls="panel-active"
+        >
+          <span>Active</span>
+          <span id="badge-active-count" class="tab-badge">0</span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          id="tab-library"
+          class="tab-btn"
+          aria-selected="false"
+          aria-controls="panel-library"
+          tabindex="-1"
+        >
+          <span>Library</span>
+          <span id="badge-library-count" class="tab-badge">0</span>
+        </button>
+      </nav>
+    </header>
+
+    <main class="content">
+      <section
+        id="panel-active"
+        role="tabpanel"
+        aria-labelledby="tab-active"
+        class="panel"
+      ></section>
+
+      <section
+        id="panel-library"
+        role="tabpanel"
+        aria-labelledby="tab-library"
+        class="panel"
+        hidden
+      ></section>
+    </main>
+  </div>
+
+  <!-- Edit Group Dialog (Name & Color) -->
+  <dialog id="dlg-edit-group" class="modal" aria-labelledby="dlg-edit-group-title" closedby="any">
+    <form method="dialog" class="modal-form">
+      <h2 id="dlg-edit-group-title" class="modal-title">Edit Group</h2>
+      <label class="field-label" for="edit-group-name">Group name</label>
+      <input type="text" id="edit-group-name" class="text-input" placeholder="Untitled group" maxlength="80" autofocus>
+      <div class="field-label">Color</div>
+      <div id="edit-group-colors" class="color-picker" role="radiogroup" aria-label="Group color"></div>
+      <div class="modal-actions">
+        <button type="submit" value="cancel" class="btn btn-secondary">Cancel</button>
+        <button type="submit" value="save" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Save / Move Group to Folder Dialog -->
+  <dialog id="dlg-folder-pick" class="modal" aria-labelledby="dlg-folder-pick-title" closedby="any">
+    <form method="dialog" class="modal-form">
+      <h2 id="dlg-folder-pick-title" class="modal-title">Save to Folder</h2>
+      <label class="field-label" for="folder-pick-select">Destination folder</label>
+      <select id="folder-pick-select" class="select-input"></select>
+      <div class="inline-create-row">
+        <input type="text" id="folder-pick-new-name" class="text-input" placeholder="Or create new folder...">
+        <button type="button" id="btn-folder-pick-create" class="btn btn-secondary">Create</button>
+      </div>
+      <div class="modal-actions">
+        <button type="submit" value="cancel" class="btn btn-secondary">Cancel</button>
+        <button type="submit" value="confirm" class="btn btn-primary" autofocus>Confirm</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Merge Group Dialog -->
+  <dialog id="dlg-merge-group" class="modal" aria-labelledby="dlg-merge-title" closedby="any">
+    <form method="dialog" class="modal-form">
+      <h2 id="dlg-merge-title" class="modal-title">Merge Group</h2>
+      <p id="merge-desc" class="modal-desc"></p>
+      <label class="field-label" for="merge-target-select">Merge into</label>
+      <select id="merge-target-select" class="select-input" autofocus></select>
+      <div class="modal-actions">
+        <button type="submit" value="cancel" class="btn btn-secondary">Cancel</button>
+        <button type="submit" value="merge" class="btn btn-primary">Merge</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Create / Rename Folder Dialog -->
+  <dialog id="dlg-folder" class="modal" aria-labelledby="dlg-folder-title" closedby="any">
+    <form method="dialog" class="modal-form">
+      <h2 id="dlg-folder-title" class="modal-title">New Folder</h2>
+      <label class="field-label" for="folder-name-input">Folder name</label>
+      <input type="text" id="folder-name-input" class="text-input" placeholder="e.g. Work, Research" maxlength="80" required autofocus>
+      <div id="folder-parent-wrap">
+        <label class="field-label" for="folder-parent-select">Parent folder</label>
+        <select id="folder-parent-select" class="select-input"></select>
+      </div>
+      <div class="modal-actions">
+        <button type="submit" value="cancel" class="btn btn-secondary">Cancel</button>
+        <button type="submit" value="save" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Confirm Delete Dialog -->
+  <dialog id="dlg-confirm" class="modal" aria-labelledby="dlg-confirm-title" closedby="any">
+    <form method="dialog" class="modal-form">
+      <h2 id="dlg-confirm-title" class="modal-title">Confirm</h2>
+      <p id="confirm-message" class="modal-desc"></p>
+      <div class="modal-actions">
+        <button type="submit" value="cancel" class="btn btn-secondary" autofocus>Cancel</button>
+        <button type="submit" value="confirm" class="btn btn-danger">Delete</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Settings & Backup Dialog -->
+  <dialog id="dlg-settings" class="modal" aria-labelledby="dlg-settings-title" closedby="any">
+    <div class="modal-form">
+      <div class="modal-header-row">
+        <h2 id="dlg-settings-title" class="modal-title">Settings &amp; Backup</h2>
+        <form method="dialog">
+          <button type="submit" value="close" class="icon-btn" aria-label="Close settings">&times;</button>
+        </form>
+      </div>
+
+      <div class="settings-section">
+        <div class="field-label">Appearance</div>
+        <div class="segmented" role="radiogroup" aria-label="Theme">
+          <button type="button" class="seg-btn" data-theme="dark">Dark</button>
+          <button type="button" class="seg-btn" data-theme="light">Light</button>
+          <button type="button" class="seg-btn" data-theme="system">System</button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="field-label">Backup (Folders &amp; Saved Groups)</div>
+        <div class="backup-actions">
+          <button type="button" id="btn-export-json" class="btn btn-secondary">Export JSON</button>
+          <button type="button" id="btn-import-json" class="btn btn-secondary">Import JSON</button>
+          <input type="file" id="import-file-input" accept=".json,application/json" hidden>
+        </div>
+        <p id="import-status" class="status-msg" hidden></p>
+      </div>
+
+      <div class="settings-section">
+        <div class="field-label">Shortcut</div>
+        <p class="modal-desc">Press <kbd>Cmd+Shift+G</kbd> (Mac) or <kbd>Ctrl+Shift+G</kbd> (Windows/Linux) to open this popup.</p>
+      </div>
+    </div>
+  </dialog>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
